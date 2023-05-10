@@ -1,0 +1,15 @@
+#BSUB -W 24:00
+#BSUB -o /rsrch4/home/biostatistics/ywang74/tdr/logs
+#BSUB -cwd /rsrch4/home/biostatistics/ywang74/tdr
+#BSUB -eo /rsrch4/home/biostatistics/ywang74/tdr/logs/error_log_2s_2by2.out
+#BSUB -q medium
+#BSUB -n 10
+#BSUB -M 16
+#BSUB -R rusage[mem=16]
+#BSUB -B
+#BSUB -N
+#BSUB -u ywang74@mdanderson.org
+#BSUB -J "ywang74_2s2by2[1-27]"
+
+module load R/4.2.1
+Rscript TDR_two_stage_2by2_server.R ${LSB_JOBINDEX} > logs/TDR_two_stage_2by2_${LSB_JOBINDEX}.out 2> logs/Routput_error_TDR_two_stage_2by2_${LSB_JOBINDEX}.out

@@ -1,0 +1,2587 @@
+---
+title: "Tables_Figures_TDR"
+author: "Yujia Wang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(kableExtra)
+library(readr)
+library(ggpubr)
+library(ggthemes)
+library(latex2exp)
+
+# install.packages("magick")
+# install.packages("webshot")
+# webshot::install_phantomjs()
+library(magick)
+library(webshot)
+
+```
+
+## Read Data
+### TDR
+```{r}
+# read TDR data
+# 1:1 randomizatin, alpha at p0=pc
+tdr_alpha10_1s2by2_alphaonly_files = (Sys.glob('results/TDR_alpha10_1s_2by2_alphaonly*.csv'))
+tdr_alpha10_1s2by2_alphamax30_files = (Sys.glob('results/TDR_alpha10_1s_2by2_alphamax30*.csv'))
+tdr_alpha20_1s2by2_alphaonly_files = (Sys.glob('results/TDR_alpha20_1s_2by2_alphaonly*.csv'))
+tdr_alpha20_1s2by2_alphamax30_files = (Sys.glob('results/TDR_alpha20_1s_2by2_alphamax30*.csv'))
+
+tdr_alpha10_1s3by2_alphaonly_files = (Sys.glob('results/TDR_alpha10_1s_3by2_alphaonly*.csv'))
+tdr_alpha10_1s3by2_alphamax30_files = (Sys.glob('results/TDR_alpha10_1s_3by2_alphamax30*.csv'))
+tdr_alpha20_1s3by2_alphaonly_files = (Sys.glob('results/TDR_alpha20_1s_3by2_alphaonly*.csv'))
+tdr_alpha20_1s3by2_alphamax30_files = (Sys.glob('results/TDR_alpha20_1s_3by2_alphamax30*.csv'))
+
+tdr_alpha10_2s2by2_alphaonly_files = (Sys.glob('results/TDR_alpha10_2s_2by2_alphaonly*.csv'))
+tdr_alpha10_2s2by2_alphamax30_files = (Sys.glob('results/TDR_alpha10_2s_2by2_alphamax30*.csv'))
+tdr_alpha20_2s2by2_alphaonly_files = (Sys.glob('results/TDR_alpha20_2s_2by2_alphaonly*.csv'))
+tdr_alpha20_2s2by2_alphamax30_files = (Sys.glob('results/TDR_alpha20_2s_2by2_alphamax30*.csv'))
+
+tdr_alpha10_2s3by2_alphaonly_files = (Sys.glob('results/TDR_alpha10_2s_3by2_alphaonly*.csv'))
+tdr_alpha10_2s3by2_alphamax30_files = (Sys.glob('results/TDR_alpha10_2s_3by2_alphamax30*.csv'))
+tdr_alpha20_2s3by2_alphaonly_files = (Sys.glob('results/TDR_alpha20_2s_3by2_alphaonly*.csv'))
+tdr_alpha20_2s3by2_alphamax30_files = (Sys.glob('results/TDR_alpha20_2s_3by2_alphamax30*.csv'))
+
+readTDRfiles = function(filenames) {
+  TDRdat = data.frame()
+  Nfiles = length(filenames)
+  print(Nfiles)
+  for (i in 1:Nfiles) {
+  dat = read.csv(filenames[i], skip = 2)
+  TDRdat = rbind(TDRdat, dat)
+  }
+  return(TDRdat)
+}
+
+tdr_alpha10_1s2by2_alphaonly = readTDRfiles(tdr_alpha10_1s2by2_alphaonly_files)
+tdr_alpha10_1s2by2_alphamax30 = readTDRfiles(tdr_alpha10_1s2by2_alphamax30_files)
+tdr_alpha20_1s2by2_alphaonly = readTDRfiles(tdr_alpha20_1s2by2_alphaonly_files)
+tdr_alpha20_1s2by2_alphamax30 = readTDRfiles(tdr_alpha20_1s2by2_alphamax30_files)
+
+tdr_alpha10_1s3by2_alphaonly = readTDRfiles(tdr_alpha10_1s3by2_alphaonly_files) 
+tdr_alpha10_1s3by2_alphamax30 = readTDRfiles(tdr_alpha10_1s3by2_alphamax30_files)
+tdr_alpha20_1s3by2_alphaonly = readTDRfiles(tdr_alpha20_1s3by2_alphaonly_files) 
+tdr_alpha20_1s3by2_alphamax30 = readTDRfiles(tdr_alpha20_1s3by2_alphamax30_files)
+
+tdr_alpha10_2s2by2_alphaonly = readTDRfiles(tdr_alpha10_2s2by2_alphaonly_files) 
+tdr_alpha10_2s2by2_alphamax30 = readTDRfiles(tdr_alpha10_2s2by2_alphamax30_files)
+tdr_alpha20_2s2by2_alphaonly = readTDRfiles(tdr_alpha20_2s2by2_alphaonly_files) 
+tdr_alpha20_2s2by2_alphamax30 = readTDRfiles(tdr_alpha20_2s2by2_alphamax30_files)
+
+tdr_alpha10_2s3by2_alphaonly = readTDRfiles(tdr_alpha10_2s3by2_alphaonly_files) 
+tdr_alpha10_2s3by2_alphamax30 = readTDRfiles(tdr_alpha10_2s3by2_alphamax30_files)
+tdr_alpha20_2s3by2_alphaonly = readTDRfiles(tdr_alpha20_2s3by2_alphaonly_files)
+tdr_alpha20_2s3by2_alphamax30 = readTDRfiles(tdr_alpha20_2s3by2_alphamax30_files)
+```
+
+### HW, LBR, Conventional
+```{r}
+# Read reference data
+# read hong
+# code: hong_reproduce.R
+hong_alpha10_alphaonly = read.csv('results/hong_alpha10_alphaonly_eta10_gam10_confidence90.csv',skip=2)
+hong_alpha10_alphamax30 = read.csv('results/hong_alpha10_alphamax30_eta10_gam10_confidence30.csv',skip=2)
+
+hong_alpha20_alphaonly_etagam10 = read.csv('results/hong_alpha20_alphaonly_eta10_gam10_confidence90.csv',skip=2)
+hong_alpha20_alphamax30_etagam10 = read.csv('results/hong_alpha20_alphamax30_eta10_gam10_confidence30.csv',skip=2)
+hong_alpha20_alphaonly_etagam20 = read.csv('results/hong_alpha20_alphaonly_eta20_gam20_confidence90.csv',skip=2) # Hong relaxed criteria on eta and gamma
+hong_alpha20_alphamax30_etagam20 = read.csv('results/hong_alpha20_alphamax30_eta20_gam20_confidence30.csv',skip=2) # Hong relaxed criteria on eta and gamma
+
+# read litwin
+# code: litwin_1s_reproduce.R
+# code: litwin_2s_reproduce.R
+litwin_alpha10_1s_alphaonly = read.csv('results/Litwin_alpha10_1s_alphaonly_1to1_confidence90.csv', skip=2)
+litwin_alpha10_1s_alphamax30 = read.csv('results/Litwin_alpha10_1s_alphamax30_1to1_confidence30.csv', skip=2)
+
+litwin_alpha10_2s_alphaonly = read.csv('results/Litwin_alpha10_2s_alphaonly_1to1_confidence90.csv', skip=0)
+litwin_alpha10_2s_alphaonly = litwin_alpha10_2s_alphaonly %>% mutate(gam = 0, eta = 0) 
+litwin_alpha10_2s_alphamax30 = read.csv('results/Litwin_alpha10_2s_alphamax30_1to1_confidence30.csv', skip=0)
+litwin_alpha10_2s_alphamax30 = litwin_alpha10_2s_alphamax30 %>% mutate(gam = 0, eta = 0)
+
+litwin_alpha20_1s_alphaonly = read.csv('results/Litwin_alpha20_1s_alphaonly_1to1_confidence90.csv', skip=2)
+litwin_alpha20_1s_alphamax30 = read.csv('results/Litwin_alpha20_1s_alphamax30_1to1_confidence30.csv', skip=2)
+
+litwin_alpha20_2s_alphaonly = read.csv('results/Litwin_alpha20_2s_alphaonly_1to1_confidence90.csv', skip=0)
+litwin_alpha20_2s_alphaonly = litwin_alpha20_2s_alphaonly %>% mutate(gam = 0, eta = 0)
+litwin_alpha20_2s_alphamax30 = read.csv('results/Litwin_alpha20_2s_alphamax30_1to1_confidence30.csv', skip=0)
+litwin_alpha20_2s_alphamax30 = litwin_alpha20_2s_alphamax30 %>% mutate(gam = 0, eta = 0)
+
+# read conventional
+# code: conventional.R
+conventional_alpha10 <- read_csv("results/conventional_alpha10_1to1.csv")
+conventional_alpha20 <- read_csv("results/conventional_alpha20_1to1.csv")
+
+```
+
+## Functions
+```{r}
+loss_func_1s <- function(x, alpha, beta, w=0.5) {
+  # 1:1 randomization
+  # calculate conventional reference sample size
+  # w: weight coefficient for adjusting the relative importance of sample size saving and power increase
+  # larger w will give more priority to sample size saving
+  # smaller w will give more priority to power gain.
+  # score = 0.5: conventional method
+  # score > 0.5: unacceptable (no sample size saving at the same power or no power increase at the same sample size)
+  # score < 0.5: sample size saving or power improvement or both; the smaller the better
+  p0 = x['p0']
+  p1 = x['p1']
+  n = x['N']
+  pwr0 = 0.80
+  pwr = x['power']
+  N0 = 2*ceiling(((qnorm(1-alpha)+qnorm(1-beta))/(p1 - p0))^2*(p0*(1-p0)+p1*(1-p1)))
+  loss_score = w*n/(0.5*N0)+(1-w)*(pwr0/pwr)-1.5
+  loss_score = 1/(1+exp(-loss_score))
+  return(loss_score)
+}
+
+loss_func_2s <- function(x, alpha, beta, w=0.5) {
+  # 1:1 randomization
+  # calculate conventional reference sample size
+  # w: weight coefficient for adjusting the relative importance of sample size saving and power increase
+  # larger w will give more priority to sample size saving
+  # smaller w will give more priority to power gain.
+  # score = 0.5: conventional method
+  # score > 0.5: unacceptable (no sample size saving at the same power or no power increase at the same sample size)
+  # score < 0.5: sample size saving or power improvement or both; the smaller the better
+  
+  p0 = x['p0']
+  p1 = x['p1']
+  n = x['N2']
+  pwr0 = 0.80
+  pwr = x['power']
+  N0 = 2*ceiling(((qnorm(1-alpha)+qnorm(1-beta))/(p1 - p0))^2*(p0*(1-p0)+p1*(1-p1)))
+  loss_score = w*n/(0.5*N0)+(1-w)*(pwr0/pwr)-1.5 # conventional will give 0 here
+  loss_score = 1/(1+exp(-loss_score)) # conventional will give 0.5 here
+  return(loss_score)
+}
+
+# percentage formatting
+fmt_diffperc = function(x,y, d=2) {
+  fmtted = paste(round(x-y,2),' (',round((x-y)/x*100,d),'%)',sep='')
+  return(fmtted)
+}
+
+fmt_p0p1 = function(p0,p1) {
+  return(paste(format(round(p0, 2), nsmall = 2),format(round(p1, 2), nsmall = 2), sep = ', '))
+}
+```
+
+## Designs
+```{r}
+p0p1_list = c('0.10, 0.25',
+              '0.10, 0.30',
+              '0.10, 0.35',
+              
+              '0.20, 0.35',
+              '0.20, 0.40',
+              '0.20, 0.45',
+              
+              '0.35, 0.50',
+              '0.35, 0.55',
+              '0.35, 0.60',
+              
+              '0.30, 0.45',
+              '0.30, 0.50',
+              
+              '0.40, 0.60',
+              '0.40, 0.65',
+              
+              '0.50, 0.65',
+              '0.50, 0.70',
+              
+              '0.55, 0.70',
+              '0.55, 0.75',
+              
+              '0.60, 0.85',
+              '0.65, 0.85',
+              '0.70, 0.85'
+)
+
+```
+
+## 1. One-Stage 2-by-2 alpha <= 0.20, beta <= 0.20, control alpha only
+```{r}
+# maximum 5% power reduction
+score = apply(tdr_alpha20_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly
+tdr_alpha20_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly_score %>% filter(power>=0.75) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+tdr_alpha20_1s2by2_alphaonly_9 = tdr_alpha20_1s2by2_alphaonly_score %>% select(p0, p1, s, m, N, power, beta, alpha, gam,eta)
+
+litwin_alpha20_1s_alphaonly_1_9 = litwin_alpha20_1s_alphaonly %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(litwin_alpha20_1s_alphaonly_1_9) = c('p0','p1','N_litwin','power_litwin','beta_litwin', 'alpha_litwin', 'gam_litwin', 'eta_litwin')
+hong_alpha20_alphaonly_etagam10_1_9 = hong_alpha20_alphaonly_etagam10 %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(hong_alpha20_alphaonly_etagam10_1_9) = c('p0','p1','N_hong','power_hong','beta_hong', 'alpha_hong', 'gam_hong', 'eta_hong')
+conventional_alpha20_1_9 = conventional_alpha20 %>% select(p0, p1, n_alphaonly)
+colnames(conventional_alpha20_1_9) = c('p0','p1','N_conventional')
+table_9_1 =  tdr_alpha20_1s2by2_alphaonly_9 %>% left_join(litwin_alpha20_1s_alphaonly_1_9, on=c('p0','p1')) %>% 
+  left_join(hong_alpha20_alphaonly_etagam10_1_9, on=c('p0','p1')) %>% 
+  left_join(conventional_alpha20_1_9, on=c('p0','p1')) %>%
+  mutate(NvsLitwin=fmt_diffperc(N_litwin,N,2),
+         NvsHong = fmt_diffperc(N_hong,N,2),
+         NvsConventional=fmt_diffperc(N_conventional,N,2),
+         powervsLitwin = power_litwin - power,
+         powervsHong = power_hong - power,
+         betavsLitwin = beta_litwin - beta,
+         betavsHong = beta_hong - beta,
+         alphavsLitwin = alpha_litwin - alpha,
+         alphavsHong = alpha_hong - alpha,
+         
+         )
+
+write.csv(table_9_1, 'tdr_one_stage_2by2_alpha20.csv', row.names = F)
+
+kable(table_9_1 %>% select(p0, p1, NvsLitwin, NvsHong, NvsConventional, powervsLitwin, betavsLitwin, alphavsLitwin), booktab=T, align='c', digits=2, 
+      caption='One-Stage 2-by-2 Method Full') %>% kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+
+
+```
+
+```{r}
+tdr1s6075 = tdr_alpha20_1s2by2_alphaonly %>% filter(p0==0.60, p1==0.75)
+score = apply(tdr1s6075, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr1s6075$loss_score = score
+tdr1s6075 = tdr_alpha20_1s2by2_alphaonly_score %>% filter(power>=0.80*0.95) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+write.csv(tdr1s6075, 'example_one_stage_loss_scores_6075.csv', row.names = F)
+```
+
+
+#### selected cases
+```{r}
+# maximum 1% power reduction
+score = apply(tdr_alpha20_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly
+tdr_alpha20_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly_score %>% filter(power>=0.80*0.95, alpha<=0.20) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+tdr_alpha20_1s2by2_alphaonly_9 = tdr_alpha20_1s2by2_alphaonly_score %>% select(p0, p1, s, m, N, power, beta, alpha, gam,eta)
+
+litwin_alpha20_1s_alphaonly_1_9 = litwin_alpha20_1s_alphaonly %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(litwin_alpha20_1s_alphaonly_1_9) = c('p0','p1','N_litwin','power_litwin','beta_litwin', 'alpha_litwin', 'gam_litwin', 'eta_litwin')
+hong_alpha20_alphaonly_etagam10_1_9 = hong_alpha20_alphaonly_etagam10 %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(hong_alpha20_alphaonly_etagam10_1_9) = c('p0','p1','N_hong','power_hong','beta_hong', 'alpha_hong', 'gam_hong', 'eta_hong')
+conventional_alpha20_1_9 = conventional_alpha20 %>% select(p0, p1, n_alphaonly)
+colnames(conventional_alpha20_1_9) = c('p0','p1','N_conventional')
+table_9_1 =  tdr_alpha20_1s2by2_alphaonly_9 %>% left_join(litwin_alpha20_1s_alphaonly_1_9, on=c('p0','p1')) %>% 
+  left_join(hong_alpha20_alphaonly_etagam10_1_9, on=c('p0','p1')) %>% 
+  left_join(conventional_alpha20_1_9, on=c('p0','p1')) %>%
+  mutate(NvsLitwin=fmt_diffperc(N_litwin,N,2),
+         NvsHong = fmt_diffperc(N_hong,N,2),
+         NvsConventional=fmt_diffperc(N_conventional,N,2),
+         powervsLitwin = power_litwin - power,
+         powervsHong = power_hong - power,
+         betavsLitwin = beta_litwin - beta,
+         betavsHong = beta_hong - beta,
+         alphavsLitwin = alpha_litwin - alpha,
+         alphavsHong = alpha_hong - alpha,
+         )
+
+
+table_9_1 = table_9_1 %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1),
+                                               s/(N/2), m/(N/2)) 
+table_9_1 = table_9_1 %>% 
+  filter(p0_p1 %in% c('0.10, 0.25',
+                      '0.10, 0.30',
+                      '0.10, 0.35',
+                      
+                      '0.20, 0.35',
+                      '0.20, 0.40',
+                      '0.20, 0.45',
+                      
+                      '0.35, 0.50',
+                      '0.35, 0.55',
+                      '0.35, 0.60',
+                      
+                      '0.30, 0.45',
+                      '0.30, 0.50',
+                      
+                      '0.40, 0.60',
+                      '0.40, 0.65',
+                      
+                      '0.50, 0.65',
+                      '0.50, 0.70',
+                      
+                      '0.55, 0.70',
+                      '0.55, 0.75',
+                      
+                      '0.60, 0.85',
+                      '0.65, 0.85',
+                      '0.70, 0.85'
+  ))
+kable(table_9_1, booktab=T, align='c', digits=2, 
+      caption='One-Stage 2-by-2 Method Full') %>% kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+```
+
+
+### Table 1
+```{r}
+
+# p0p1_list = c('0.05, 0.20',
+#               '0.15, 0.30',
+#               '0.25, 0.40',
+#               '0.35, 0.50',
+#               '0.50, 0.65',
+#               '0.70, 0.85',
+#               
+#               '0.20, 0.40',
+#               '0.20, 0.45',
+#               '0.30, 0.50',
+#               '0.30, 0.55',
+#               '0.40, 0.60',
+#               '0.40, 0.65',
+#               '0.50, 0.70',
+#               '0.50, 0.75',
+#               '0.60, 0.80',
+#               '0.60, 0.85'
+# )
+score = apply(tdr_alpha20_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly
+tdr_alpha20_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly_score %>% 
+  filter(power>=0.8*0.95) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_1 = tdr_alpha20_1s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, gam, eta, expic)
+
+table_1_ltx = table_1
+table_1_ltx[,8:13] = round(table_1_ltx[,8:13],2)
+# colnames(table_1_ltx) = c("$p_C$","$p_E$","$\\gamma_{max}$","$\\lambda_{max}$","$s$","$m$","$N$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")
+write.csv(table_1_ltx, 'manuscript/tbl_1.csv', row.names = F)
+
+tbl1 = kable(table_1, booktab=T, align='c', digits=2, 
+      caption='Table 1: TDR one-stage 2-by-2 design, $\\alpha\\leq0.20$, $\\beta\\leq0.20$',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$s$","$m$","$N$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl1
+```
+
+```{r}
+sort(fig1_dat$beta - fig1_dat$beta.LBR)
+
+sort(fig1_dat$N.reduce.perc.TDR - fig1_dat$N.reduce.perc.LBR)
+
+
+
+sd(fig1_dat$N.reduce.perc.TDR - fig1_dat$N.reduce.perc.LBR)
+
+sort(fig1_dat$power - fig1_dat$power.LBR)
+fig1_dat %>% filter(p0==0.10, p1==0.30) %>% mutate(beta_diff = beta.LBR - beta, alpha_diff = alpha.LBR - alpha) %>% select(alpha_diff, beta_diff)
+
+fig1_dat %>% filter(p0==0.30, p1==0.50) %>% mutate(beta_diff = beta.LBR - beta, alpha_diff = alpha.LBR - alpha) %>% select(alpha_diff, beta_diff)
+```
+
+### Figure 1a
+```{r}
+table_1 = tdr_alpha20_1s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, gam, eta, expic)
+
+fig1_dat = table_1 %>% left_join(litwin_alpha20_1s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) %>% 
+  left_join(hong_alpha20_alphaonly_etagam10, by=c("p0","p1"), suffix=c("", ".HW")) %>% 
+  left_join(conventional_alpha20, by=c("p0","p1"))
+
+fig1_dat = fig1_dat %>% rowwise() %>% mutate(N.reduce.TDR = n_alphaonly - N,
+                                             N.reduce.HW = n_alphaonly - N.HW,
+                                             N.reduce.LBR = n_alphaonly - N.LBR,
+                                             N.reduce.perc.TDR = (N.reduce.TDR/n_alphaonly)*100,
+                                             N.reduce.perc.HW = (N.reduce.HW/n_alphaonly)*100,
+                                             N.reduce.perc.LBR = (N.reduce.LBR/n_alphaonly)*100)
+fig1_dat = fig1_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1)) 
+
+fig1_dat_tdr = fig1_dat %>% select(p0_p1, N,N.reduce.TDR,N.reduce.perc.TDR)
+colnames(fig1_dat_tdr) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig1_dat_tdr$design = 'TDR'
+fig1_dat_hw = fig1_dat %>% select(p0_p1, N.HW,N.reduce.HW,N.reduce.perc.HW)
+colnames(fig1_dat_hw) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig1_dat_hw$design = 'HW'
+fig1_dat_lbr = fig1_dat %>% select(p0_p1, N.LBR,N.reduce.LBR,N.reduce.perc.LBR)
+colnames(fig1_dat_lbr) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig1_dat_lbr$design = 'LBR'
+
+
+fig1_dat_long = rbind(fig1_dat_tdr,fig1_dat_hw,fig1_dat_lbr)
+```
+
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9","#E69F00",  "#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig1_dat_long$design = ordered(fig1_dat_long$design, levels=c('TDR', 'HW', 'LBR'))
+fig1_dat_long$N.reduce.perc = ifelse(fig1_dat_long$N.reduce.perc < 0, 0, fig1_dat_long$N.reduce.perc)
+fig1a = fig1_dat_long %>% ggplot(aes(x=p0_p1, y=N.reduce.perc,fill=design)) + 
+  geom_col(color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size reduction from conventional design $(\\alpha\\leq$ 0.20, $\\beta\\leq$ 0.20)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "% reduction") + 
+  scale_y_continuous(breaks=seq(0,60,5), limits = c(0, 60)) + 
+  scale_fill_manual(values=cbPalette) + 
+  
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig1a
+```
+### Figure 1b
+
+```{r}
+table_1 = tdr_alpha20_1s2by2_alphaonly_score %>% rowwise() %>%
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>%
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, gam, eta, expic)
+
+fig1b_dat = table_1 %>% left_join(litwin_alpha20_1s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) %>%
+  left_join(hong_alpha20_alphaonly_etagam10, by=c("p0","p1"), suffix=c("", ".HW")) %>%
+  left_join(conventional_alpha20, by=c("p0","p1"))
+
+fig1b_dat = fig1b_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1))
+
+fig1b_dat_tdr = fig1b_dat %>% select(p0_p1, power, alpha, beta, eta, gam) %>%
+  mutate(design="TDR")
+
+fig1b_dat_hw = fig1b_dat %>% select(p0_p1, power.HW, alpha.HW, beta.HW, eta.HW, gam.HW)
+colnames(fig1b_dat_hw) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig1b_dat_hw = fig1b_dat_hw %>%
+  mutate(design="HW")
+
+fig1b_dat_lbr = fig1b_dat %>% select(p0_p1, power.LBR,alpha.LBR, beta.LBR, eta.LBR, gam.LBR)
+colnames(fig1b_dat_lbr) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig1b_dat_lbr = fig1b_dat_lbr %>%
+  mutate(design="LBR", eta=NA, gam=NA) # no inconclusive region in LBR method, thus eta & gam = 0
+
+fig1b_dat_long = rbind(fig1b_dat_tdr,fig1b_dat_hw,fig1b_dat_lbr)
+
+```
+
+```{r, fig.height=3, fig.width=2}
+fig1b_dat_long$design = ordered(fig1b_dat_long$design, levels=c('TDR', 'HW', 'LBR'))
+cbPalette <- c("#56B4E9","#E69F00",  "#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig1b1 = fig1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.80,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.65,0.90,0.05), limits = c(0.65, 0.90)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig1b2 = fig1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig1b3 = fig1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\beta$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+#  theme_light() +
+#   theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+#         axis.title.x = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+#         axis.text.y = element_text(size=rel(0.8)),
+#         text = element_text(),
+#         panel.background = element_rect(colour = NA),
+#         plot.background = element_rect(colour = NA),
+#         panel.border = element_rect(colour = NA),
+#         axis.text = element_text(),
+#         axis.line = element_line(colour="black"),
+#         axis.line.x = element_blank(),
+#         axis.ticks = element_line(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_line(colour="#f0f0f0"),
+#         panel.grid.minor = element_blank(),
+#         legend.key = element_rect(colour = NA),
+#         legend.position = "none",
+#         legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+#         legend.title = element_text(face="italic"),
+#         plot.margin=unit(c(0,5,0,5),"mm"),
+#         strip.background=element_rect(colour="#999999",fill="#999999"),
+#         strip.text = element_text(face="bold")
+#         )
+# 
+# fig1b4 = fig1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+#   geom_line(aes(y=eta, color=design, group=design), alpha=0.75) +
+#   geom_point(aes(y=eta, color=design), alpha=0.75) +
+#   scale_color_manual(values=cbPalette) +
+#   # geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+#   scale_y_continuous(breaks=seq(0,0.35,0.05), limits = c(0.0, 0.35)) +
+#   labs(y = TeX("$\\eta$")) +
+#   # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+#   theme_light() +
+#   theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+#         axis.title.x = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+#         axis.text.y = element_text(size=rel(0.8)),
+#         text = element_text(),
+#         panel.background = element_rect(colour = NA),
+#         plot.background = element_rect(colour = NA),
+#         panel.border = element_rect(colour = NA),
+#         axis.text = element_text(),
+#         axis.line = element_line(colour="black"),
+#         axis.line.x = element_blank(),
+#         axis.ticks = element_line(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_line(colour="#f0f0f0"),
+#         panel.grid.minor = element_blank(),
+#         legend.key = element_rect(colour = NA),
+#         legend.position = "none",
+#         legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+#         legend.title = element_text(face="italic"),
+#         plot.margin=unit(c(0,5,0,5),"mm"),
+#         strip.background=element_rect(colour="#999999",fill="#999999"),
+#         strip.text = element_text(face="bold")
+#         )
+# 
+# fig1b5 = fig1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+#   geom_line(aes(y=gam, color=design, group=design), alpha=0.5) +
+#   geom_point(aes(y=gam, color=design), alpha=0.5) +
+#   scale_color_manual(values=cbPalette) +
+#   # geom_hline(yintercept = 0.2,linetype='dashed', color='grey', alpha=0.5) +
+#   scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+#  labs(x = TeX("Response rates: ($p_0, p_1$)"), y = TeX("$\\gamma$")) +
+  labs(x = TeX("Response rates: ($p_0, p_1$)")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+# fig1b = ggarrange(fig1b1, fig1b2, fig1b3, fig1b4, fig1b5, align='v', heights=c(1.5,1,1,1.5,2), nrow=5)
+fig1b = ggarrange(fig1b1, fig1b2, fig1b3, align='v', heights=c(1.5,1,1.5), nrow=3)
+fig1b
+```
+### Figure 1
+```{r, fig.height=3, fig.width=5}
+fig1 = ggarrange(fig1a, fig1b, nrow=1, legend = 'bottom')
+fig1
+```
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/tbl1_fig1_v2.pdf'
+# save_kable(tbl1, FILENAME)
+# kableExtra::kable_styling(tbl1) %>% save_kable('manuscript/tbl1.png')
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig1
+dev.off()
+
+```
+
+
+
+
+## 1.2. One-Stage 2-by-2 alpha <= 0.20, beta <= 0.20, alphamax30
+### Table 1.1
+```{r}
+
+score = apply(tdr_alpha20_1s2by2_alphamax30, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_1s2by2_alphamax30_score = tdr_alpha20_1s2by2_alphamax30
+tdr_alpha20_1s2by2_alphamax30_score$loss_score = score
+tdr_alpha20_1s2by2_alphamax30_score = tdr_alpha20_1s2by2_alphamax30_score %>% filter(power>=0.80*0.95, alpha<=0.20) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_1_1 = tdr_alpha20_1s2by2_alphamax30_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, alphamax, gam, eta, expic)
+
+table_S2_ltx = table_1_1
+table_S2_ltx[,8:14] = round(table_S2_ltx[,8:14],2)
+write.csv(table_S2_ltx, 'manuscript/tbl_S2.csv', row.names = F)
+
+tbl1_1 = kable(table_1_1, booktab=T, align='c', digits=2, 
+      caption='Table S2: TDR one-stage 2-by-2 design, $\\alpha\\leq0.20$, $\\beta\\leq0.20$, $p_0$ CI 30%',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$s$","$m$","$N$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\alpha_{max}$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl1_1
+```
+
+### Figure 1.1a
+```{r}
+table_1_1 = tdr_alpha20_1s2by2_alphamax30_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, alphamax, gam, eta, expic)
+
+fig1_1_dat = table_1_1 %>% left_join(litwin_alpha20_1s_alphamax30, by=c("p0","p1"), suffix=c("", ".LBR")) %>% 
+  left_join(hong_alpha20_alphamax30_etagam10, by=c("p0","p1"), suffix=c("", ".HW")) %>% 
+  left_join(conventional_alpha20, by=c("p0","p1"))
+
+fig1_1_dat = fig1_1_dat %>% rowwise() %>% mutate(N.reduce.TDR = n_alphaonly - N,
+                                             N.reduce.HW = n_alphaonly - N.HW,
+                                             N.reduce.LBR = n_alphaonly - N.LBR,
+                                             N.reduce.perc.TDR = (N.reduce.TDR/n_alphaonly)*100,
+                                             N.reduce.perc.HW = (N.reduce.HW/n_alphaonly)*100,
+                                             N.reduce.perc.LBR = (N.reduce.LBR/n_alphaonly)*100)
+fig1_1_dat = fig1_1_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1)) 
+
+fig1_1_dat_tdr = fig1_1_dat %>% select(p0_p1, N,N.reduce.TDR,N.reduce.perc.TDR)
+colnames(fig1_1_dat_tdr) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig1_1_dat_tdr$design = 'TDR'
+fig1_1_dat_hw = fig1_1_dat %>% select(p0_p1, N.HW,N.reduce.HW,N.reduce.perc.HW)
+colnames(fig1_1_dat_hw) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig1_1_dat_hw$design = 'HW'
+fig1_1_dat_lbr = fig1_1_dat %>% select(p0_p1, N.LBR,N.reduce.LBR,N.reduce.perc.LBR)
+colnames(fig1_1_dat_lbr) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig1_1_dat_lbr$design = 'LBR'
+
+
+fig1_1_dat_long = rbind(fig1_1_dat_tdr,fig1_1_dat_hw,fig1_1_dat_lbr)
+```
+
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9","#E69F00",  "#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig1_1_dat_long$design = ordered(fig1_1_dat_long$design, levels=c('TDR', 'HW', 'LBR'))
+fig1_1_dat_long$N.reduce.perc = ifelse(fig1_1_dat_long$N.reduce.perc < 0, 0, fig1_1_dat_long$N.reduce.perc)
+fig1_1a = fig1_1_dat_long %>% ggplot(aes(x=p0_p1, y=N.reduce.perc,fill=design)) + 
+  geom_col(color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size reduction from conventional design $(\\alpha\\leq$ 0.20, $\\beta\\leq$ 0.20)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "% reduction") + 
+  scale_y_continuous(breaks=seq(0,50,5), limits = c(0, 50)) + 
+  scale_fill_manual(values=cbPalette) + 
+  
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig1_1a
+```
+### Figure 1.1b
+
+```{r}
+table_1_1 = tdr_alpha20_1s2by2_alphamax30_score %>% rowwise() %>%
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>%
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, alphamax, gam, eta, expic)
+
+fig1_1b_dat = table_1_1 %>% left_join(litwin_alpha20_1s_alphamax30, by=c("p0","p1"), suffix=c("", ".LBR")) %>%
+  left_join(hong_alpha20_alphamax30_etagam10, by=c("p0","p1"), suffix=c("", ".HW")) %>%
+  left_join(conventional_alpha20, by=c("p0","p1"))
+
+fig1_1b_dat = fig1_1b_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1))
+
+fig1_1b_dat_tdr = fig1_1b_dat %>% select(p0_p1, power, alpha, alphamax, beta, eta, gam) %>%
+  mutate(design="TDR")
+
+fig1_1b_dat_hw = fig1_1b_dat %>% select(p0_p1, power.HW, alpha.HW, alphamax.HW, beta.HW, eta.HW, gam.HW)
+colnames(fig1_1b_dat_hw) = c('p0_p1', 'power', 'alpha', 'alphamax', 'beta', 'eta', 'gam')
+fig1_1b_dat_hw = fig1_1b_dat_hw %>%
+  mutate(design="HW")
+
+fig1_1b_dat_lbr = fig1_1b_dat %>% select(p0_p1, power.LBR,alpha.LBR, alphamax.LBR, beta.LBR, eta.LBR, gam.LBR)
+colnames(fig1_1b_dat_lbr) = c('p0_p1', 'power', 'alpha', 'alphamax', 'beta', 'eta', 'gam')
+fig1_1b_dat_lbr = fig1_1b_dat_lbr %>%
+  mutate(design="LBR", eta=NA, gam=NA) # no inconclusive region in LBR method, thus eta & gam = 0
+
+fig1_1b_dat_long = rbind(fig1_1b_dat_tdr,fig1_1b_dat_hw,fig1_1b_dat_lbr)
+
+```
+
+```{r, fig.height=3, fig.width=2}
+fig1_1b_dat_long$design = ordered(fig1_1b_dat_long$design, levels=c('TDR', 'HW', 'LBR'))
+cbPalette <- c("#56B4E9","#E69F00",  "#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig1_1b1 = fig1_1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.80,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.65,0.90,0.05), limits = c(0.65, 0.90)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig1_1b2 = fig1_1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig1_1b3 = fig1_1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alphamax, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alphamax, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha_{max}$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+
+fig1_1b4 = fig1_1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\beta$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+#   theme_light() +
+#   theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+#         axis.title.x = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+#         axis.text.y = element_text(size=rel(0.8)),
+#         text = element_text(),
+#         panel.background = element_rect(colour = NA),
+#         plot.background = element_rect(colour = NA),
+#         panel.border = element_rect(colour = NA),
+#         axis.text = element_text(),
+#         axis.line = element_line(colour="black"),
+#         axis.line.x = element_blank(),
+#         axis.ticks = element_line(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_line(colour="#f0f0f0"),
+#         panel.grid.minor = element_blank(),
+#         legend.key = element_rect(colour = NA),
+#         legend.position = "none",
+#         legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+#         legend.title = element_text(face="italic"),
+#         plot.margin=unit(c(0,5,0,5),"mm"),
+#         strip.background=element_rect(colour="#999999",fill="#999999"),
+#         strip.text = element_text(face="bold")
+#         )
+# 
+# fig1_1b4 = fig1_1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+#   geom_line(aes(y=eta, color=design, group=design), alpha=0.75) +
+#   geom_point(aes(y=eta, color=design), alpha=0.75) +
+#   scale_color_manual(values=cbPalette) +
+#   # geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+#   scale_y_continuous(breaks=seq(0,0.35,0.05), limits = c(0.0, 0.35)) +
+#   labs(y = TeX("$\\eta$")) +
+#   # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+#   theme_light() +
+#   theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+#         axis.title.x = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+#         axis.text.y = element_text(size=rel(0.8)),
+#         text = element_text(),
+#         panel.background = element_rect(colour = NA),
+#         plot.background = element_rect(colour = NA),
+#         panel.border = element_rect(colour = NA),
+#         axis.text = element_text(),
+#         axis.line = element_line(colour="black"),
+#         axis.line.x = element_blank(),
+#         axis.ticks = element_line(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_line(colour="#f0f0f0"),
+#         panel.grid.minor = element_blank(),
+#         legend.key = element_rect(colour = NA),
+#         legend.position = "none",
+#         legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+#         legend.title = element_text(face="italic"),
+#         plot.margin=unit(c(0,5,0,5),"mm"),
+#         strip.background=element_rect(colour="#999999",fill="#999999"),
+#         strip.text = element_text(face="bold")
+#         )
+# 
+# fig1_1b5 = fig1_1b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+#   geom_line(aes(y=gam, color=design, group=design), alpha=0.5) +
+#   geom_point(aes(y=gam, color=design), alpha=0.5) +
+#   scale_color_manual(values=cbPalette) +
+#   # geom_hline(yintercept = 0.2,linetype='dashed', color='grey', alpha=0.5) +
+#   scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+# , y = TeX("$\\gamma$")
+  labs(x = TeX("Response rates: ($p_0, p_1$)")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig1_1b = ggarrange(fig1_1b1, fig1_1b2, fig1_1b3, fig1_1b4, align='v', heights=c(1.5,1,1,1.5), nrow=4)
+fig1_1b
+```
+### Figure 1.1
+```{r, fig.height=3.5, fig.width=5}
+fig1_1 = ggarrange(fig1_1a, fig1_1b, nrow=1, legend = 'bottom')
+fig1_1
+```
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/fig1_1.pdf'
+save_kable(tbl1_1, FILENAME)
+
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig1_1
+dev.off()
+
+```
+
+
+
+
+
+
+## 2. One-Stage 2-by-2 alpha <= 0.10, beta <= 0.10
+### 2.1. control alpha only
+```{r}
+# maximum 5% power reduction
+score = apply(tdr_alpha10_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.10, beta=0.10, w=0.50)
+tdr_alpha10_1s2by2_alphaonly_score = tdr_alpha10_1s2by2_alphaonly
+tdr_alpha10_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha10_1s2by2_alphaonly_score = tdr_alpha10_1s2by2_alphaonly_score %>% filter(power>=0.90*0.95, alpha<=0.10) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+tdr_alpha10_1s2by2_alphaonly_9 = tdr_alpha10_1s2by2_alphaonly_score %>% select(p0, p1, s, m, N, power, beta, alpha, gam,eta)
+
+litwin_alpha10_1s_alphaonly_1_9 = litwin_alpha10_1s_alphaonly %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(litwin_alpha10_1s_alphaonly_1_9) = c('p0','p1','N_litwin','power_litwin','beta_litwin', 'alpha_litwin', 'gam_litwin', 'eta_litwin')
+hong_alpha10_alphaonly_1_9 = hong_alpha10_alphaonly %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(hong_alpha10_alphaonly_1_9) = c('p0','p1','N_hong','power_hong','beta_hong', 'alpha_hong', 'gam_hong', 'eta_hong')
+conventional_alpha10_1_9 = conventional_alpha10 %>% select(p0, p1, n_alphaonly)
+colnames(conventional_alpha10_1_9) = c('p0','p1','N_conventional')
+table_9_1 =  tdr_alpha10_1s2by2_alphaonly_9 %>% left_join(litwin_alpha10_1s_alphaonly_1_9, on=c('p0','p1')) %>% 
+  left_join(hong_alpha10_alphaonly_1_9, on=c('p0','p1')) %>% 
+  left_join(conventional_alpha10_1_9, on=c('p0','p1')) %>%
+  mutate(NvsLitwin=fmt_diffperc(N_litwin,N,2),
+         NvsHong = fmt_diffperc(N_hong,N,2),
+         NvsConventional=fmt_diffperc(N_conventional,N,2),
+         powervsLitwin = power_litwin - power,
+         powervsHong = power_hong - power,
+         betavsLitwin = beta_litwin - beta,
+         betavsHong = beta_hong - beta,
+         alphavsLitwin = alpha_litwin - alpha,
+         alphavsHong = alpha_hong - alpha,
+         
+         )
+kable(table_9_1, booktab=T, align='c', digits=2, 
+      caption='One-Stage 2-by-2 Method Full') %>% kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+
+
+```
+
+#### selected cases
+```{r}
+# maximum 1% power reduction
+score = apply(tdr_alpha10_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.10, beta=0.10, w=0.50)
+tdr_alpha10_1s2by2_alphaonly_score = tdr_alpha10_1s2by2_alphaonly
+tdr_alpha10_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha10_1s2by2_alphaonly_score = tdr_alpha10_1s2by2_alphaonly_score %>% filter(power>=0.90*0.95, alpha<=0.10) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+tdr_alpha10_1s2by2_alphaonly_9 = tdr_alpha10_1s2by2_alphaonly_score %>% select(p0, p1, s, m, N, power, beta, alpha, gam,eta)
+
+litwin_alpha10_1s_alphaonly_1_9 = litwin_alpha10_1s_alphaonly %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(litwin_alpha10_1s_alphaonly_1_9) = c('p0','p1','N_litwin','power_litwin','beta_litwin', 'alpha_litwin', 'gam_litwin', 'eta_litwin')
+hong_alpha10_alphaonly_1_9 = hong_alpha10_alphaonly %>% select(p0, p1, N, power, beta, alpha, gam, eta)
+colnames(hong_alpha10_alphaonly_1_9) = c('p0','p1','N_hong','power_hong','beta_hong', 'alpha_hong', 'gam_hong', 'eta_hong')
+conventional_alpha10_1_9 = conventional_alpha10 %>% select(p0, p1, n_alphaonly)
+colnames(conventional_alpha10_1_9) = c('p0','p1','N_conventional')
+table_9_1 =  tdr_alpha10_1s2by2_alphaonly_9 %>% left_join(litwin_alpha10_1s_alphaonly_1_9, on=c('p0','p1')) %>% 
+  left_join(hong_alpha10_alphaonly_1_9, on=c('p0','p1')) %>% 
+  left_join(conventional_alpha10_1_9, on=c('p0','p1')) %>%
+  mutate(NvsLitwin=fmt_diffperc(N_litwin,N,2),
+         NvsHong = fmt_diffperc(N_hong,N,2),
+         NvsConventional=fmt_diffperc(N_conventional,N,2),
+         powervsLitwin = power_litwin - power,
+         powervsHong = power_hong - power,
+         betavsLitwin = beta_litwin - beta,
+         betavsHong = beta_hong - beta,
+         alphavsLitwin = alpha_litwin - alpha,
+         alphavsHong = alpha_hong - alpha,
+         )
+
+fmt_p0p1 = function(p0,p1) {
+  return(paste(format(round(p0, 2), nsmall = 2),format(round(p1, 2), nsmall = 2), sep = ', '))
+}
+table_9_1 = table_9_1 %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1),
+                                               s/(N/2), m/(N/2)) 
+table_9_1 = table_9_1 %>% 
+  filter(p0_p1 %in% c('0.05, 0.20',
+                      '0.15, 0.30',
+                      '0.25, 0.40',
+                      '0.35, 0.50',
+                      '0.50, 0.65',
+                      '0.70, 0.85',
+                      
+                      '0.20, 0.40',
+                      '0.20, 0.45',
+                      '0.30, 0.50',
+                      '0.30, 0.55',
+                      '0.40, 0.60',
+                      '0.40, 0.65',
+                      '0.50, 0.70',
+                      '0.50, 0.75',
+                      '0.60, 0.80',
+                      '0.60, 0.85'
+  ))
+kable(table_9_1, booktab=T, align='c', digits=2, 
+      caption='One-Stage 2-by-2 Method Full') %>% kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+```
+
+
+### Table 2
+```{r}
+
+score = apply(tdr_alpha10_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.10, beta=0.10, w=0.50)
+tdr_alpha10_1s2by2_alphaonly_score = tdr_alpha10_1s2by2_alphaonly
+tdr_alpha10_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha10_1s2by2_alphaonly_score = tdr_alpha10_1s2by2_alphaonly_score %>% filter(power>=0.90*0.95, alpha<=0.10) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_2 = tdr_alpha10_1s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, gam, eta, expic)
+
+table_2_ltx = table_2
+table_2_ltx[,8:13] = round(table_2_ltx[,8:13],2)
+# colnames(table_1_ltx) = c("$p_C$","$p_E$","$\\gamma_{max}$","$\\lambda_{max}$","$s$","$m$","$N$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")
+write.csv(table_2_ltx, 'manuscript/tbl_2.csv', row.names = F)
+
+
+tbl2 = kable(table_2, booktab=T, align='c', digits=2, 
+      caption='Table 2: TDR one-stage 2-by-2 design, $\\alpha\\leq0.10$, $\\beta\\leq0.10$',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$s$","$m$","$N$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl2
+```
+```{r}
+sort(fig2_dat$beta - fig2_dat$beta.LBR)
+
+sort(fig2_dat$N.reduce.perc.TDR - fig2_dat$N.reduce.perc.LBR)
+
+
+
+sd(fig2_dat$N.reduce.perc.TDR - fig2_dat$N.reduce.perc.LBR)
+
+sort(fig2_dat$power - fig2_dat$power.LBR)
+fig2_dat %>% filter(p0==0.20, p1==0.45) %>% mutate(beta_diff = beta.LBR - beta, alpha_diff = alpha.LBR - alpha) %>% select(alpha_diff, beta_diff)
+
+fig2_dat %>% filter(p0==0.65, p1==0.85) %>% mutate(beta_diff = beta.LBR - beta, alpha_diff = alpha.LBR - alpha) %>% select(alpha_diff, beta_diff)
+```
+### Figure 2a
+```{r}
+table_2 = tdr_alpha10_1s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, gam, eta, expic)
+
+fig2_dat = table_2 %>% left_join(litwin_alpha10_1s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) %>% 
+  left_join(hong_alpha10_alphaonly, by=c("p0","p1"), suffix=c("", ".HW")) %>% 
+  left_join(conventional_alpha10, by=c("p0","p1"))
+
+fig2_dat = fig2_dat %>% rowwise() %>% mutate(N.reduce.TDR = n_alphaonly - N,
+                                             N.reduce.HW = n_alphaonly - N.HW,
+                                             N.reduce.LBR = n_alphaonly - N.LBR,
+                                             N.reduce.perc.TDR = (N.reduce.TDR/n_alphaonly)*100,
+                                             N.reduce.perc.HW = (N.reduce.HW/n_alphaonly)*100,
+                                             N.reduce.perc.LBR = (N.reduce.LBR/n_alphaonly)*100)
+fig2_dat = fig2_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1)) 
+
+fig2_dat_tdr = fig2_dat %>% select(p0_p1, N,N.reduce.TDR,N.reduce.perc.TDR)
+colnames(fig2_dat_tdr) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig2_dat_tdr$design = 'TDR'
+fig2_dat_hw = fig2_dat %>% select(p0_p1, N.HW,N.reduce.HW,N.reduce.perc.HW)
+colnames(fig2_dat_hw) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig2_dat_hw$design = 'HW'
+fig2_dat_lbr = fig2_dat %>% select(p0_p1, N.LBR,N.reduce.LBR,N.reduce.perc.LBR)
+colnames(fig2_dat_lbr) = c('p0_p1', 'N', 'N.reduce', 'N.reduce.perc')
+fig2_dat_lbr$design = 'LBR'
+
+
+fig2_dat_long = rbind(fig2_dat_tdr,fig2_dat_hw,fig2_dat_lbr)
+```
+
+
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9","#E69F00",  "#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig2_dat_long$design = ordered(fig2_dat_long$design, levels=c('TDR', 'HW', 'LBR'))
+fig2_dat_long$N.reduce.perc = ifelse(fig2_dat_long$N.reduce.perc < 0, 0, fig2_dat_long$N.reduce.perc)
+fig2a = fig2_dat_long %>% ggplot(aes(x=p0_p1, y=N.reduce.perc,fill=design)) + 
+  geom_col(color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size reduction from conventional design $(\\alpha\\leq$ 0.10, $\\beta\\leq$ 0.10)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "% reduction") + 
+  scale_y_continuous(breaks=seq(0,60,5), limits = c(0, 60)) + 
+  scale_fill_manual(values=cbPalette) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig2a
+```
+
+### Figure 2b
+
+```{r}
+table_2 = tdr_alpha10_1s2by2_alphaonly_score %>% rowwise() %>%
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>%
+  select(p0, p1, gammax, expicmax, s, m, N, power, beta, alpha, gam, eta, expic)
+
+fig2b_dat = table_2 %>% left_join(litwin_alpha10_1s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) %>%
+  left_join(hong_alpha10_alphaonly, by=c("p0","p1"), suffix=c("", ".HW")) %>%
+  left_join(conventional_alpha10, by=c("p0","p1"))
+
+fig2b_dat = fig2b_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1))
+
+fig2b_dat_tdr = fig2b_dat %>% select(p0_p1, power, alpha, beta, eta, gam) %>%
+  mutate(design="TDR")
+
+fig2b_dat_hw = fig2b_dat %>% select(p0_p1, power.HW, alpha.HW, beta.HW, eta.HW, gam.HW)
+colnames(fig2b_dat_hw) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig2b_dat_hw = fig2b_dat_hw %>%
+  mutate(design="HW")
+
+fig2b_dat_lbr = fig2b_dat %>% select(p0_p1, power.LBR,alpha.LBR, beta.LBR, eta.LBR, gam.LBR)
+colnames(fig2b_dat_lbr) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig2b_dat_lbr = fig2b_dat_lbr %>%
+  mutate(design="LBR",eta=NA, gam=NA) # no inconclusive region in LBR method, thus eta & gam = 0
+
+fig2b_dat_long = rbind(fig2b_dat_tdr,fig2b_dat_hw,fig2b_dat_lbr)
+
+```
+
+```{r, fig.height=3, fig.width=2}
+fig2b_dat_long$design = ordered(fig2b_dat_long$design, levels=c('TDR', 'HW', 'LBR'))
+
+fig2b1 = fig2b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.90,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.75,1,0.05), limits = c(0.75,1)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.10, $\\beta\\leq$0.10)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig2b2 = fig2b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.10,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.15,0.05), limits = c(0.0, 0.15)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig2b3 = fig2b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.10,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.15,0.05), limits = c(0.0, 0.15)) +
+  labs(y = TeX("$\\beta$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+#   theme_light() +
+#   theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+#         axis.title.x = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+#         axis.text.y = element_text(size=rel(0.8)),
+#         text = element_text(),
+#         panel.background = element_rect(colour = NA),
+#         plot.background = element_rect(colour = NA),
+#         panel.border = element_rect(colour = NA),
+#         axis.text = element_text(),
+#         axis.line = element_line(colour="black"),
+#         axis.line.x = element_blank(),
+#         axis.ticks = element_line(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_line(colour="#f0f0f0"),
+#         panel.grid.minor = element_blank(),
+#         legend.key = element_rect(colour = NA),
+#         legend.position = "none",
+#         legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+#         legend.title = element_text(face="italic"),
+#         plot.margin=unit(c(0,5,0,5),"mm"),
+#         strip.background=element_rect(colour="#999999",fill="#999999"),
+#         strip.text = element_text(face="bold")
+#         )
+# 
+# fig2b4 = fig2b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+#   geom_line(aes(y=eta, color=design, group=design), alpha=0.75) +
+#   geom_point(aes(y=eta, color=design), alpha=0.75) +
+#   scale_color_manual(values=cbPalette) +
+#   # geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+#   scale_y_continuous(breaks=seq(0,0.50,0.05), limits = c(0.0, 0.50)) +
+#   labs(y = TeX("$\\eta$")) +
+#   # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+#   theme_light() +
+#   theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+#         axis.title.x = element_blank(),
+#         axis.text.x = element_blank(),
+#         axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+#         axis.text.y = element_text(size=rel(0.8)),
+#         text = element_text(),
+#         panel.background = element_rect(colour = NA),
+#         plot.background = element_rect(colour = NA),
+#         panel.border = element_rect(colour = NA),
+#         axis.text = element_text(),
+#         axis.line = element_line(colour="black"),
+#         axis.line.x = element_blank(),
+#         axis.ticks = element_line(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_line(colour="#f0f0f0"),
+#         panel.grid.minor = element_blank(),
+#         legend.key = element_rect(colour = NA),
+#         legend.position = "none",
+#         legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+#         legend.title = element_text(face="italic"),
+#         plot.margin=unit(c(0,5,0,5),"mm"),
+#         strip.background=element_rect(colour="#999999",fill="#999999"),
+#         strip.text = element_text(face="bold")
+#         )
+# 
+# fig2b5 = fig2b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+#   geom_line(aes(y=gam, color=design, group=design), alpha=0.5) +
+#   geom_point(aes(y=gam, color=design), alpha=0.5) +
+#   scale_color_manual(values=cbPalette) +
+#   # geom_hline(yintercept = 0.2,linetype='dashed', color='grey', alpha=0.5) +
+#   scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+# , y = TeX("$\\gamma$")
+  labs(x = TeX("Response rates: ($p_0, p_1$)")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig2b = ggarrange(fig2b1, fig2b2, fig2b3, align='v', heights=c(1.5,1,1.5), nrow=3)
+fig2b
+```
+
+### Figure 2
+```{r, fig.height=3.5, fig.width=5}
+fig2 = ggarrange(fig2a, fig2b, nrow=1, legend = 'bottom')
+fig2
+```
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/tbl2_fig2.pdf'
+save_kable(tbl2, FILENAME)
+
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig2
+dev.off()
+
+```
+
+
+
+
+
+## 3. Two-Stage 2-by-2 alpha <= 0.20, beta <= 0.20
+### 1.1. control alpha only
+#### selected cases
+### Table 3
+```{r}
+
+score = apply(tdr_alpha20_2s2by2_alphaonly, 1, loss_func_2s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_2s2by2_alphaonly_score = tdr_alpha20_2s2by2_alphaonly
+tdr_alpha20_2s2by2_alphaonly_score$loss_score = score
+tdr_alpha20_2s2by2_alphaonly_score = tdr_alpha20_2s2by2_alphaonly_score %>% 
+  filter(power>=0.8*0.95) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_3 = tdr_alpha20_2s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, a1, m1, s, m2, En, N1, N2, power, beta, alpha, gam, eta, expic)
+
+table_3_ltx = table_3
+table_3_ltx[,8:17] = round(table_3_ltx[,8:17],2)
+write.csv(table_3_ltx, 'manuscript/tbl_3.csv', row.names = F)
+
+tbl3 = kable(table_3, booktab=T, align='c', digits=2, 
+      caption='Table 3: TDR two-stage 2-by-2 design, $\\alpha\\leq0.20$, $\\beta\\leq0.20$',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$s_1$","$m_1$","$s_2$","$m_2$","$EN$", "$N_1$","$N_2$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl3
+```
+
+### Figure 3a
+```{r}
+fig3_dat_tdr = tdr_alpha20_2s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='TDR') %>% filter(p0_p1 %in% p0p1_list) %>% ungroup() %>%
+  select(p0_p1, En, N2, power, beta, alpha, gam, eta, design)
+
+fig3_dat_lbr = litwin_alpha20_2s_alphaonly %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='LBR') %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0_p1, En, N1, N2, power, beta, alpha, gam, eta, design) %>%
+  mutate(N2-N1)
+
+fig3_dat = left_join(fig3_dat_tdr, fig3_dat_lbr, by='p0_p1', suffix=c("",".LBR"))
+fig3_dat = fig3_dat %>% rowwise() %>% mutate(En.reduce.perc=(En.LBR - En)/En.LBR*100,
+                                             Nmax.reduce.perc = (N2.LBR - N2)/N2.LBR*100)
+fig3_dat_long = pivot_longer(fig3_dat, cols = c('En.reduce.perc', 'Nmax.reduce.perc'), names_to = 'metric')
+```
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9", "#009E73", "#E69F00","#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+fig3_dat_long$metric = ordered(fig3_dat_long$metric, levels=c('En.reduce.perc', 'Nmax.reduce.perc'))
+fig3a = fig3_dat_long %>% ggplot(aes(x=p0_p1,fill=metric)) + 
+  geom_col(aes(y=value), color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size reduction vs LBR $(\\alpha\\leq$ 0.20, $\\beta\\leq$ 0.20)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "% reduction") + 
+  scale_y_continuous(breaks=seq(0,20,5), limits = c(0, 20)) + 
+  scale_fill_manual(values=cbPalette) + 
+  
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig3a
+```
+```{r}
+tdr2s3560 = tdr_alpha20_2s2by2_alphaonly %>% filter(p0==0.35, p1==0.60)
+score = apply(tdr2s3560, 1, loss_func_2s, alpha=0.20, beta=0.20, w=0.50)
+
+tdr2s3560$loss_score = score
+tdr_alpha20_2s2by2_alphaonly_score = tdr_alpha20_2s2by2_alphaonly_score %>% 
+  filter(power>=0.8*0.95) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+```
+
+
+### Figure 3b
+```{r}
+table_3 = tdr_alpha20_2s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, a1, m1, s, m2, En, N1, N2, power, beta, alpha, gam, eta, expic)
+
+fig3b_dat = table_3 %>% left_join(litwin_alpha20_2s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) 
+
+fig3b_dat = fig3b_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1))
+
+fig3b_dat_tdr = fig3b_dat %>% select(p0_p1, power, alpha, beta, eta, gam) %>%
+  mutate(design="TDR")
+
+fig3b_dat_lbr = fig3b_dat %>% select(p0_p1, power.LBR,alpha.LBR, beta.LBR, eta.LBR, gam.LBR)
+colnames(fig3b_dat_lbr) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig3b_dat_lbr = fig3b_dat_lbr %>%
+  mutate(design="LBR")
+
+fig3b_dat_long = rbind(fig3b_dat_tdr,fig3b_dat_lbr)
+
+```
+
+```{r, fig.height=3, fig.width=2}
+cbPalette <- c("#56B4E9","#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig3b_dat_long$design = ordered(fig3b_dat_long$design, levels=c('TDR', 'LBR'))
+
+fig3b1 = fig3b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.80,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.65,0.90,0.05), limits = c(0.65, 0.90)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig3b2 = fig3b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig3b3 = fig3b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(x = TeX("Response rates: ($p_0, p_1$)"), y = TeX("$\\beta$")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig3b = ggarrange(fig3b1, fig3b2, fig3b3, align='v', heights=c(1.5,1,1.5), nrow=3)
+fig3b
+```
+### Figure 3
+```{r, fig.height=2.5, fig.width=5}
+fig3 = ggarrange(fig3a, fig3b, nrow=1, legend = 'bottom')
+fig3
+```
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/fig3.pdf'
+save_kable(tbl3, FILENAME)
+
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig3
+dev.off()
+
+```
+
+## 4. One-Stage 2-by-2 vs 3-by-2 alpha <= 0.20, beta <= 0.20, control alpha only
+### Table 4
+```{r}
+
+
+score = apply(tdr_alpha20_1s2by2_alphaonly, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly
+tdr_alpha20_1s2by2_alphaonly_score$loss_score = score
+tdr_alpha20_1s2by2_alphaonly_score = tdr_alpha20_1s2by2_alphaonly_score %>% filter(power>=0.80*0.95, alpha<=0.20) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+score = apply(tdr_alpha20_1s3by2_alphaonly, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_1s3by2_alphaonly_score = tdr_alpha20_1s3by2_alphaonly
+tdr_alpha20_1s3by2_alphaonly_score$loss_score = score
+tdr_alpha20_1s3by2_alphaonly_score = tdr_alpha20_1s3by2_alphaonly_score %>% filter(power>=0.80*0.95, alpha<=0.20) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_4 = tdr_alpha20_1s3by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, r, s, m, N, power, beta, alpha, gam, eta, expic)
+
+table_S3_ltx = table_4
+table_S3_ltx[,9:14] = round(table_S3_ltx[,9:14],2)
+write.csv(table_S3_ltx, 'manuscript/tbl_S3.csv', row.names = F)
+
+tbl4 = kable(table_4, booktab=T, align='c', digits=2, 
+      caption='Table S3: TDR one-stage 3-by-2 design, $\\alpha\\leq0.20$, $\\beta\\leq0.20$',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$r$","$s$","$m$","$N$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl4
+```
+
+### Figure 4a
+```{r}
+table_4_2by2 = tdr_alpha20_1s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='2by2') %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0_p1, design, N, power, beta, alpha, gam, eta, expic)
+table_4_3by2 = tdr_alpha20_1s3by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='3by2') %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0_p1, design, N, power, beta, alpha, gam, eta, expic)
+
+
+fig4_dat_long = rbind(table_4_2by2,table_4_3by2)
+```
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9", "#009E73", "#E69F00","#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+fig4_dat_long$design = ordered(fig4_dat_long$design, levels=c('2by2', '3by2'))
+fig4a = fig4_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) + 
+  geom_col(aes(y=N), color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size: one-stage 2-by-2 vs 3-by-2 $(\\alpha\\leq$ 0.20, $\\beta\\leq$ 0.20)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "Sample size") + 
+  scale_y_continuous(breaks=seq(0,80,5), limits = c(0, 80)) + 
+  scale_fill_manual(values=cbPalette) + 
+  
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig4a
+```
+
+
+### Figure 4b
+```{r, fig.height=3, fig.width=2}
+cbPalette <- c("#56B4E9", "#009E73", "#E69F00","#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+fig4b_dat_long = fig4_dat_long
+
+fig4b1 = fig4b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.80,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.65,0.90,0.05), limits = c(0.65, 0.90)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig4b2 = fig4b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig4b3 = fig4b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(x = TeX("Response rates: ($p_0, p_1$)"), y = TeX("$\\beta$")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig4b = ggarrange(fig4b1, fig4b2, fig4b3, align='v', heights=c(1.5,1,1.5), nrow=3)
+fig4b
+```
+
+
+### Figure 4
+```{r, fig.height=2.5, fig.width=5}
+fig4 = ggarrange(fig4a, fig4b, nrow=1, legend = 'bottom')
+fig4
+```
+### delta
+```{r}
+fig4_dat_long = fig4_dat_long %>% rowwise() %>% mutate(d = p1-p0)
+fig4_dat_long %>% group_by(round(d,2), design) %>% summarise(mean(N), mean(power), mean(alpha), mean(beta))
+```
+
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/tbl4_fig4.pdf'
+save_kable(tbl4, FILENAME)
+
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig4
+dev.off()
+
+```
+
+## 5. Loss function case study
+```{r}
+case1 = tdr_alpha20_1s2by2_alphaonly %>% filter(p0==0.35,p1==0.55) %>% 
+  select(p0,p1,power, N, gammax, expicmax) %>% 
+group_by(p0,p1,power, N) %>%
+  arrange(gammax,expicmax) %>%
+  filter(row_number() %in% c(1)) 
+
+score = apply(case1, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.40)
+case1$score_w40 = score
+score = apply(case1, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+case1$score_w50 = score
+score = apply(case1, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.60)
+case1$score_w60 = score
+
+
+
+# case1_dat_1 = case1 %>% distinct(N, power, loss_score) %>% arrange(loss_score)
+# case1_dat_1
+# 
+# score = apply(case1, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+# case1$loss_score = score
+# case1_dat_2 = case1 %>% distinct(N, power, loss_score) %>% arrange(loss_score)
+# case1_dat_2
+# 
+# score = apply(case1, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.60)
+# case1$loss_score = score
+# case1_dat_3 = case1 %>% distinct(N, power, loss_score) %>% arrange(loss_score)
+# case1_dat_3
+
+case1
+
+case1[,3] = round(case1[,3],2)
+case1[,7:9] = round(case1[,7:9],5)
+
+table_S1_ltx = case1[,3:9]
+# table_S1_ltx[,8:13] = round(table_3_ltx[,8:13],2)
+write.csv(table_S1_ltx, 'manuscript/tbl_S1.csv', row.names = F)
+
+tbl5 = kable(case1[,3:9], booktab=T, align='c', # digits=5, 
+      caption='Table 5: example of loss scores at w=0.40, 0.50, 0.60',
+      col.names = c("$\\pi$","$N$","$\\gamma_{max}$", "$\\lambda_{max}$", "$w=0.40$","$w=0.50$","$w=0.60$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl5
+```
+```{r}
+case2 = tdr_alpha20_1s2by2_alphaonly %>% filter(p0==0.50,p1==0.65)
+score = apply(case2, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.10)
+case2$loss_score = score
+case2_dat = case2 %>% distinct(N, power, loss_score) %>% arrange(loss_score)
+case2_dat
+
+score = apply(case2, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.50)
+case2$loss_score = score
+case2_dat = case2 %>% distinct(N, power, loss_score) %>% arrange(loss_score)
+case2_dat
+
+score = apply(case2, 1, loss_func_1s, alpha=0.20, beta=0.20, w=0.90)
+case2$loss_score = score
+case2_dat = case2 %>% distinct(N, power, loss_score) %>% arrange(loss_score)
+case2_dat
+
+```
+
+## 6. Two-Stage 3-by-2 alpha <= 0.20, beta <= 0.20
+### 1.1. control alpha only
+#### selected cases
+### Table 6
+```{r}
+
+score = apply(tdr_alpha20_2s3by2_alphaonly, 1, loss_func_2s, alpha=0.20, beta=0.20, w=0.50)
+tdr_alpha20_2s3by2_alphaonly_score = tdr_alpha20_2s3by2_alphaonly
+tdr_alpha20_2s3by2_alphaonly_score$loss_score = score
+tdr_alpha20_2s3by2_alphaonly_score = tdr_alpha20_2s3by2_alphaonly_score %>% filter(power>=0.80*0.95, alpha<=0.20) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_6 = tdr_alpha20_2s3by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, a1, m1, b1,b2, m2, En, N1, N2, power, beta, alpha, gam, eta, expic)
+
+tbl6 = kable(table_6, booktab=T, align='c', digits=2, 
+      caption='Table 6: TDR two-stage 3-by-2 design, $\\alpha\\leq0.20$, $\\beta\\leq0.20$',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$a_1$","$m_1$","$b_1$","$b_2$","$m_2$","$EN$", "$N_1$","$N_2$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl6
+```
+
+### Figure 6a
+```{r}
+fig6_dat_tdr = tdr_alpha20_2s3by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='TDR') %>% filter(p0_p1 %in% p0p1_list) %>% ungroup() %>%
+  select(p0_p1, En, N2, power, beta, alpha, gam, eta, design)
+
+fig6_dat_lbr = litwin_alpha20_2s_alphaonly %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='LBR') %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0_p1, En, N2, power, beta, alpha, gam, eta, design)
+
+fig6_dat = left_join(fig6_dat_tdr, fig6_dat_lbr, by='p0_p1', suffix=c("",".LBR"))
+fig6_dat = fig6_dat %>% rowwise() %>% mutate(En.reduce.perc=(En.LBR - En)/En.LBR*100,
+                                             Nmax.reduce.perc = (N2.LBR - N2)/N2.LBR*100)
+fig6_dat_long = pivot_longer(fig6_dat, cols = c('En.reduce.perc', 'Nmax.reduce.perc'), names_to = 'metric')
+```
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9", "#009E73", "#E69F00","#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+fig6_dat_long$metric = ordered(fig6_dat_long$metric, levels=c('En.reduce.perc', 'Nmax.reduce.perc'))
+fig6a = fig6_dat_long %>% ggplot(aes(x=p0_p1,fill=metric)) + 
+  geom_col(aes(y=value), color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size reduction vs LBR $(\\alpha\\leq$ 0.20, $\\beta\\leq$ 0.20)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "% reduction") + 
+  scale_y_continuous(breaks=seq(0,20,5), limits = c(0, 20)) + 
+  scale_fill_manual(values=cbPalette) + 
+  
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig6a
+```
+### Figure 6b
+```{r}
+table_6 = tdr_alpha20_2s3by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, a1, m1, b1,b2, m2, En, N1, N2, power, beta, alpha, gam, eta, expic)
+
+fig6b_dat = table_6 %>% left_join(litwin_alpha20_2s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) 
+
+fig6b_dat = fig6b_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1))
+
+fig6b_dat_tdr = fig6b_dat %>% select(p0_p1, power, alpha, beta, eta, gam) %>%
+  mutate(design="TDR")
+
+fig6b_dat_lbr = fig6b_dat %>% select(p0_p1, power.LBR,alpha.LBR, beta.LBR, eta.LBR, gam.LBR)
+colnames(fig6b_dat_lbr) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig6b_dat_lbr = fig6b_dat_lbr %>%
+  mutate(design="LBR")
+
+fig6b_dat_long = rbind(fig6b_dat_tdr,fig6b_dat_lbr)
+
+```
+
+```{r, fig.height=3, fig.width=2}
+cbPalette <- c("#56B4E9","#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig6b_dat_long$design = ordered(fig6b_dat_long$design, levels=c('TDR', 'LBR'))
+
+fig6b1 = fig6b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.80,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.65,0.90,0.05), limits = c(0.65, 0.90)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig6b2 = fig6b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.20, $\\beta\\leq$0.20)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig6b3 = fig6b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(x = TeX("Response rates: ($p_0, p_1$)"), y = TeX("$\\beta$")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig6b = ggarrange(fig6b1, fig6b2, fig6b3, align='v', heights=c(1.5,1,1.5), nrow=3)
+fig6b
+```
+### Figure 6
+```{r, fig.height=2.5, fig.width=5}
+fig6 = ggarrange(fig6a, fig6b, nrow=1, legend = 'bottom')
+fig6
+```
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/tbl6_fig6.pdf'
+save_kable(tbl6, FILENAME)
+
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig6
+dev.off()
+
+```
+
+
+
+## 7. Two-Stage 2-by-2 alpha <= 0.10, beta <= 0.10
+### 1.1. control alpha only
+#### selected cases
+### Table 7
+```{r}
+
+score = apply(tdr_alpha10_2s2by2_alphaonly, 1, loss_func_2s, alpha=0.10, beta=0.10, w=0.50)
+tdr_alpha10_2s2by2_alphaonly_score = tdr_alpha10_2s2by2_alphaonly
+tdr_alpha10_2s2by2_alphaonly_score$loss_score = score
+tdr_alpha10_2s2by2_alphaonly_score = tdr_alpha10_2s2by2_alphaonly_score %>% 
+  filter(power>=0.8*0.95) %>%
+  group_by(p0,p1,gammax) %>%
+  arrange(p0,p1,loss_score,expicmax) %>%
+  filter(row_number() %in% c(1)) %>%
+  group_by(p0,p1) %>%
+  arrange(p0,p1,loss_score) %>%
+  filter(row_number() %in% c(1)) 
+
+# Study Design
+table_7 = tdr_alpha10_2s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, a1, m1, s, m2, En, N1, N2, power, beta, alpha, gam, eta, expic)
+
+table_7_ltx = table_7
+table_7_ltx[,8:17] = round(table_7_ltx[,8:17],2)
+write.csv(table_7_ltx, 'manuscript/tbl_7.csv', row.names = F)
+
+tbl7 = kable(table_7, booktab=T, align='c', digits=2, 
+      caption='Table 3: TDR two-stage 2-by-2 design, $\\alpha\\leq0.20$, $\\beta\\leq0.20$',
+      col.names = c("$p_0$","$p_1$","$\\gamma_{max}$","$\\lambda_{max}$","$s_1$","$m_1$","$s_2$","$m_2$","$EN$", "$N_1$","$N_2$","$\\pi$", "$\\beta$", "$\\alpha$", "$\\gamma$", "$\\eta$", "$\\lambda$")) %>% 
+  kable_classic_2() %>%
+  kable_styling(latex_options=c("scale_down","HOLD_position"))
+tbl7
+```
+
+### Figure 7a
+```{r}
+fig7_dat_tdr = tdr_alpha10_2s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='TDR') %>% filter(p0_p1 %in% p0p1_list) %>% ungroup() %>%
+  select(p0_p1, En, N2, power, beta, alpha, gam, eta, design)
+
+fig7_dat_lbr = litwin_alpha10_2s_alphaonly %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1), design='LBR') %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0_p1, En, N1, N2, power, beta, alpha, gam, eta, design) %>%
+  mutate(N2-N1)
+
+fig7_dat = left_join(fig7_dat_tdr, fig7_dat_lbr, by='p0_p1', suffix=c("",".LBR"))
+fig7_dat = fig7_dat %>% rowwise() %>% mutate(En.reduce.perc=(En.LBR - En)/En.LBR*100,
+                                             Nmax.reduce.perc = (N2.LBR - N2)/N2.LBR*100)
+fig7_dat_long = pivot_longer(fig7_dat, cols = c('En.reduce.perc', 'Nmax.reduce.perc'), names_to = 'metric')
+```
+
+```{r, fig.width=6, fig.height=3}
+cbPalette <- c("#56B4E9", "#009E73", "#E69F00","#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+fig7_dat_long$metric = ordered(fig7_dat_long$metric, levels=c('En.reduce.perc', 'Nmax.reduce.perc'))
+fig7a = fig7_dat_long %>% ggplot(aes(x=p0_p1,fill=metric)) + 
+  geom_col(aes(y=value), color='black', size=0.05, width=0.5, position = position_dodge(0.5)) + # stat = 'identity', 
+  # geom_text(aes(label = N.reduce), vjust = -0.5, size=2, position = position_dodge(width= 0.5)) + 
+    ggtitle(TeX("Sample size reduction vs LBR $(\\alpha\\leq$ 0.20, $\\beta\\leq$ 0.20)")) + 
+    labs(x = TeX("Response rates: ($p_0, p_1$)"), y = "% reduction") + 
+  scale_y_continuous(breaks=seq(0,20,5), limits = c(0, 20)) + 
+  scale_fill_manual(values=cbPalette) + 
+  
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,5,5),"mm"),
+        strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+        strip.text = element_text(face="bold")
+        )
+fig7a
+```
+```{r}
+# tdr2s3560 = tdr_alpha10_2s2by2_alphaonly %>% filter(p0==0.35, p1==0.60)
+# score = apply(tdr2s3560, 1, loss_func_2s, alpha=0.20, beta=0.20, w=0.50)
+# 
+# tdr2s3560$loss_score = score
+# tdr_alpha10_2s2by2_alphaonly_score = tdr_alpha10_2s2by2_alphaonly_score %>% 
+#   filter(power>=0.8*0.95) %>%
+#   group_by(p0,p1,gammax) %>%
+#   arrange(p0,p1,loss_score,expicmax) %>%
+#   filter(row_number() %in% c(1)) %>%
+#   group_by(p0,p1) %>%
+#   arrange(p0,p1,loss_score) %>%
+#   filter(row_number() %in% c(1)) 
+
+```
+
+
+### Figure 7b
+```{r}
+table_7 = tdr_alpha10_2s2by2_alphaonly_score %>% rowwise() %>% 
+  mutate(p0_p1 = fmt_p0p1(p0,p1)) %>% filter(p0_p1 %in% p0p1_list) %>% 
+  select(p0, p1, gammax, expicmax, a1, m1, s, m2, En, N1, N2, power, beta, alpha, gam, eta, expic)
+
+fig7b_dat = table_7 %>% left_join(litwin_alpha10_2s_alphaonly, by=c("p0","p1"), suffix=c("", ".LBR")) 
+
+fig7b_dat = fig7b_dat %>% rowwise() %>% mutate(p0_p1 = fmt_p0p1(p0,p1))
+
+fig7b_dat_tdr = fig7b_dat %>% select(p0_p1, power, alpha, beta, eta, gam) %>%
+  mutate(design="TDR")
+
+fig7b_dat_lbr = fig7b_dat %>% select(p0_p1, power.LBR,alpha.LBR, beta.LBR, eta.LBR, gam.LBR)
+colnames(fig7b_dat_lbr) = c('p0_p1', 'power', 'alpha', 'beta', 'eta', 'gam')
+fig7b_dat_lbr = fig7b_dat_lbr %>%
+  mutate(design="LBR")
+
+fig7b_dat_long = rbind(fig7b_dat_tdr,fig7b_dat_lbr)
+
+```
+
+```{r, fig.height=3, fig.width=2}
+cbPalette <- c("#56B4E9","#999999", "#F0E442", "#009E73", "#0072B2", "#D55E00", "#CC79A7")
+
+fig7b_dat_long$design = ordered(fig7b_dat_long$design, levels=c('TDR', 'LBR'))
+
+fig7b1 = fig7b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=power, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=power, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.80,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0.70,0.95,0.05), limits = c(0.70, 0.95)) +
+  labs(y = TeX("$\\pi$")) +
+  ggtitle(TeX("Operating characteristics $(\\alpha\\leq$0.10, $\\beta\\leq$0.10)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(10,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig7b2 = fig7b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=alpha, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=alpha, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(y = TeX("$\\alpha$")) +
+  # ggtitle(TeX("Performance comparison $(\\alpha\\leq$0.10, $\\beta\\leq$0.10)")) + 
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5, vjust=0.5),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.line.x = element_blank(),
+        axis.ticks = element_line(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "none",
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,0,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig7b3 = fig7b_dat_long %>% ggplot(aes(x=p0_p1,fill=design)) +
+  geom_line(aes(y=beta, color=design, group=design), alpha=0.75) +
+  geom_point(aes(y=beta, color=design), alpha=0.75) +
+  scale_color_manual(values=cbPalette) +
+  geom_hline(yintercept = 0.20,linetype='dashed', color='black', alpha=0.5) +
+  scale_y_continuous(breaks=seq(0,0.25,0.05), limits = c(0.0, 0.25)) +
+  labs(x = TeX("Response rates: ($p_0, p_1$)"), y = TeX("$\\beta$")) +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", size = rel(1), hjust = 0.5, vjust=0.5),
+        axis.text.x = element_text(angle = 60, vjust=0.5, size=rel(0.8)),
+        axis.title.y = element_text(angle=90,vjust =2, size=rel(0.8)),
+        axis.text.y = element_text(size=rel(0.8)),
+        text = element_text(),
+        panel.background = element_rect(colour = NA),
+        plot.background = element_rect(colour = NA),
+        panel.border = element_rect(colour = NA),
+        axis.text = element_text(),
+        axis.line = element_line(colour="black"),
+        axis.ticks = element_line(),
+        panel.grid.major = element_line(colour="#f0f0f0"),
+        panel.grid.minor = element_blank(),
+        legend.key = element_rect(colour = NA),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.key.size= unit(0.2, "cm"),
+        legend.margin = margin(0,0,0,0), # unit(0, "cm"),
+        legend.title = element_text(face="italic"),
+        plot.margin=unit(c(0,5,5,5),"mm"),
+        strip.background=element_rect(colour="#999999",fill="#999999"),
+        strip.text = element_text(face="bold")
+        )
+
+fig7b = ggarrange(fig7b1, fig7b2, fig7b3, align='v', heights=c(1.5,1,1.5), nrow=3)
+fig7b
+```
+### Figure 7
+```{r, fig.height=2.5, fig.width=5}
+fig7 = ggarrange(fig7a, fig7b, nrow=1, legend = 'bottom')
+fig7
+```
+
+### write to pdf
+```{r}
+FILENAME = 'manuscript/fig7.pdf'
+save_kable(tbl7, FILENAME)
+
+pdf(file = FILENAME,   # The directory you want to save the file in
+        width = 10, # The width of the plot in inches
+        height = 5) # The height of the plot in inches
+fig7
+dev.off()
+
+```
+

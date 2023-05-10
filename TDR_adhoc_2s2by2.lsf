@@ -1,0 +1,15 @@
+#BSUB -W 24:00
+#BSUB -o /rsrch4/home/biostatistics/ywang74/tdr/logs
+#BSUB -cwd /rsrch4/home/biostatistics/ywang74/tdr
+#BSUB -eo /rsrch4/home/biostatistics/ywang74/tdr/logs/error_log_adhoc_2s2by2.out
+#BSUB -q medium
+#BSUB -n 10
+#BSUB -M 30
+#BSUB -R rusage[mem=30]
+#BSUB -B
+#BSUB -N
+#BSUB -u ywang74@mdanderson.org
+#BSUB -J "ywang74_2s2by2"
+
+module load R/4.2.1
+Rscript TDR_adhoc_2s2by2.R > logs/TDR_adhoc_2s2by2.out 2> logs/Routput_error_adhoc_2s2by2.out
